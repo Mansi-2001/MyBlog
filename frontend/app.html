@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="blogApp">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Secure Blogging Platform</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main id="app" ng-controller="MainController as mainCtrl">
+
+    <header>
+      <h1>Secure Blogging Platform</h1>
+      <nav>
+        <span ng-if="!mainCtrl.isAuthenticated()">
+          <a href="" ng-click="mainCtrl.showLogin()">Login</a>
+          <a href="" ng-click="mainCtrl.showRegister()">Register</a>
+        </span>
+        <span ng-if="mainCtrl.isAuthenticated()">
+          <span>Welcome, {{mainCtrl.getUsername()}}</span>
+          <a href="" ng-click="mainCtrl.showPosts()">Posts</a>
+          <a href="" ng-click="mainCtrl.showCreate()">New Post</a>
+          <a href="" ng-click="mainCtrl.logout()">Logout</a>
+        </span>
+      </nav>
+    </header>
+
+    <section ng-show="mainCtrl.view === 'login'">
+      <h2>Login</h2>
+      <form ng-submit="mainCtrl.login()">
+        <label for="login-username">Username</label>
+        <input id="login-username" type="text" ng-model="mainCtrl.loginData.username" required />
+        <label for="login-password">Password</label>
+        <input id="login-password" type="password" ng-model="mainCtrl.loginData.password" required />
+        <div class="error" ng-if="mainCtrl.error">{{mainCtrl.error}}</div>
+        <button type="submit">Login</button>
+      </form>
+    </section>
+
+    <section ng-show="mainCtrl.view === 'register'">
+      <h2>Register</h2>
+      <form ng-submit="mainCtrl.register()">
+        <label for="register-username">Username</label>
+        <input id="register-username" type="text" ng-model="mainCtrl.registerData.username" required minlength="3" />
+        <label for="register-password">Password</label>
+        <input id="register-password" type="password" ng-model="mainCtrl.registerData.password" required minlength="6" />
+        <div class="error" ng-if="mainCtrl.error">{{mainCtrl.error}}</div>
+        <button type="submit">Register</button>
+      </form>
+    </section>
+
+    <section ng-show="mainCtrl.view === 'posts'">
+      <h2>Blog Posts</h2>
+      <div ng-if="mainCtrl.posts.length === 0">No posts yet.</div>
+      <article ng-repeat="post in mainCtrl.posts track by post._id" class="post" tabindex="0" role="article" aria-label="Blog post titled {{post.title}}">
+        <h3 class="post-title">{{post.title}}</h3>
+        <p class="post-meta">By {{post.author.username}} on {{post.createdAt | date:'medium'}}</p>
+        <p class="post-content">{{post.content}}</p>
+        <div class="post-actions" ng-if="mainCtrl.isAuthenticated() && post.author.username === mainCtrl.getUsername()">
+          <button aria-label="Edit {{post.title}}" ng-click="mainCtrl.editPost(post)">Edit</button>
+          <button aria-label="Delete {{post.title}}" ng-click="mainCtrl.deletePost(post)">Delete</button>
+        </div>
+      </article>
+    </section>
+
+    <section ng-show="mainCtrl.view === 'create' || mainCtrl.view === 'edit'">
+      <h2 ng-if="mainCtrl.view === 'create'">Create New Post</h2>
+      <h2 ng-if="mainCtrl.view === 'edit'">Edit Post</h2>
+      <form ng-submit="mainCtrl.savePost()" aria-label="Blog post form">
+        <label for="post-title">Title</label>
+        <input id="post-title" type="text" ng-model="mainCtrl.postData.title" required maxlength="100" />
+        <label for="post-content">Content</label>
+        <textarea id="post-content" ng-model="mainCtrl.postData.content" rows="6" required></textarea>
+        <div class="error" ng-if="mainCtrl.error">{{mainCtrl.error}}</div>
+        <button type="submit">{{mainCtrl.view === 'create' ? 'Create' : 'Save'}}</button>
+        <button type="button" ng-click="mainCtrl.showPosts()">Cancel</button>
+      </form>
+    </section>
+
+  </main>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.3/angular.min.js"></script>
+  <script>
+    angular.module('blogApp', [])
+    .service('AuthService', ['$http', '$window', function($http, $window){
+      const apiUrl = 'http://localhost:3000/api';
+
+      this.login = function(username, password){
+        return $http.post(apiUrl + '/login', { username, password });
+      };
+
+      this.register = function(username, password){
+        return $http.post(apiUrl + '/register', { username, password });
+      };
+
+      this.saveToken = function(token){
+        $window.localStorage.setItem('jwtToken', token);
+      };
+
+      this.getToken = function(){
+        return $window.localStorage.getItem('jwtToken');
+      };
+
+      this.isLoggedIn = function(){
+        const token = this.getToken();
+        return !!token;
+      };
+
+      this.logout = function(){
+        $window.localStorage.removeItem('jwtToken');
+      };
+
+      this.getUserNameFromToken = function(){
+        const token = this.getToken();
+        if(token){
+          try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            return payload.username;
+          } catch(e) {
+            return null;
+          }
+        }
+        return null;
+      };
+    }])
+    .service('BlogService', ['$http', 'AuthService', function($http, AuthService){
+      const apiUrl = 'http://localhost:3000/api/posts';
+
+      this.getPosts = function(){
+        return $http.get(apiUrl);
+      };
+
+      this.createPost = function(postData){
+        return $http.post(apiUrl, postData, {
+          headers: {
+            'Authorization': 'Bearer ' + AuthService.getToken()
+          }
+        });
+      };
+
+      this.updatePost = function(postId, postData){
+        return $http.put(apiUrl + '/' + postId, postData, {
+          headers: {
+            'Authorization': 'Bearer ' + AuthService.getToken()
+          }
+        });
+      };
+
+      this.deletePost = function(postId){
+        return $http.delete(apiUrl + '/' + postId, {
+          headers: {
+            'Authorization': 'Bearer ' + AuthService.getToken()
+          }
+        });
+      };
+    }])
+    .controller('MainController', ['$scope', 'AuthService', 'BlogService', function($scope, AuthService, BlogService){
+      const vm = this;
+
+      vm.view = 'posts';
+      vm.error = null;
+
+      vm.loginData = {};
+      vm.registerData = {};
+      vm.postData = {};
+
+      vm.isAuthenticated = function(){
+        return AuthService.isLoggedIn();
+      };
+
+      vm.getUsername = function(){
+        return AuthService.getUserNameFromToken();
+      };
+
+      vm.showLogin = function(){
+        vm.error = null;
+        vm.loginData = {};
+        vm.view = 'login';
+      };
+
+      vm.showRegister = function(){
+        vm.error = null;
+        vm.registerData = {};
+        vm.view = 'register';
+      };
+
+      vm.showPosts = function(){
+        vm.error = null;
+        vm.loginData = {};
+        vm.registerData = {};
+        vm.postData = {};
+        vm.view = 'posts';
+        vm.loadPosts();
+      };
+
+      vm.showCreate = function(){
+        vm.error = null;
+        vm.postData = {};
+        vm.view = 'create';
+      };
+
+      vm.login = function(){
+        vm.error = null;
+        AuthService.login(vm.loginData.username, vm.loginData.password)
+          .then(function(res){
+            AuthService.saveToken(res.data.token);
+            vm.showPosts();
+          })
+          .catch(function(err){
+            vm.error = err.data.message || 'Login failed';
+          });
+      };
+
+      vm.register = function(){
+        vm.error = null;
+        AuthService.register(vm.registerData.username, vm.registerData.password)
+          .then(function(){
+            vm.showLogin();
+          })
+          .catch(function(err){
+            if(err.data && err.data.errors){
+              vm.error = err.data.errors.map(e => e.msg).join('; ');
+            } else {
+              vm.error = err.data.message || 'Registration failed';
+            }
+          });
+      };
+
+      vm.loadPosts = function(){
+        BlogService.getPosts()
+          .then(function(res){
+            vm.posts = res.data;
+            $scope.$applyAsync();
+          })
+          .catch(function(){
+            vm.error = 'Failed to load posts';
+            $scope.$applyAsync();
+          });
+      };
+
+      vm.editPost = function(post){
+        vm.postData = angular.copy(post);
+        vm.view = 'edit';
+      };
+
+      vm.savePost = function(){
+        vm.error = null;
+        if(vm.view === 'create'){
+          BlogService.createPost(vm.postData)
+          .then(function(){
+            vm.showPosts();
+          })
+          .catch(function(err){
+            vm.error = err.data.message || 'Failed to create post';
+          });
+        } else if(vm.view === 'edit'){
+          BlogService.updatePost(vm.postData._id, vm.postData)
+          .then(function(){
+            vm.showPosts();
+          })
+          .catch(function(err){
+            vm.error = err.data.message || 'Failed to update post';
+          });
+        }
+      };
+
+      vm.deletePost = function(post){
+        if(confirm('Are you sure you want to delete this post?')){
+          BlogService.deletePost(post._id)
+            .then(function(){
+              vm.loadPosts();
+            })
+            .catch(function(err){
+              vm.error = err.data.message || 'Failed to delete post';
+              $scope.$applyAsync();
+            });
+        }
+      };
+
+      vm.logout = function(){
+        AuthService.logout();
+        vm.showLogin();
+      };
+
+      vm.loadPosts();
+    }]);
+  </script>
+</body>
+</html>

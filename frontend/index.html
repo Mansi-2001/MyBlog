@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Welcome to Secure Blog</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600&family=Roboto&display=swap');
+    body, html {
+      margin: 0; padding: 0; height: 100%;
+      font-family: 'Roboto', sans-serif;
+      background: 
+        linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)),
+        url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1470&q=80') no-repeat center center fixed;
+      background-size: cover;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      user-select: none;
+    }
+    #container {
+      backdrop-filter: blur(10px);
+      background: rgba(255,255,255,0.1);
+      border-radius: 20px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.7);
+      padding: 40px 60px;
+      max-width: 400px;
+      text-align: center;
+    }
+    h1 {
+      font-family: 'Poppins', sans-serif;
+      font-weight: 600;
+      font-size: 2.7rem;
+      margin-bottom: 20px;
+      letter-spacing: 2px;
+      text-shadow: 0 2px 6px rgba(0,0,0,0.8);
+    }
+    p.subtitle {
+      font-size: 1.1rem;
+      font-weight: 300;
+      color: #ddd;
+      margin-bottom: 40px;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+    }
+    a.btn {
+      font-family: 'Poppins', sans-serif;
+      font-weight: 600;
+      font-size: 1.25rem;
+      padding: 14px 36px;
+      margin: 0 15px;
+      border-radius: 50px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      color: white;
+      text-decoration: none;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+      display: inline-block;
+      user-select: none;
+    }
+    .btn.login {
+      background: #ff6b6b;
+      box-shadow: 0 6px 20px #ff6b6baa;
+    }
+    .btn.login:hover {
+      background: #ff3b3b;
+      box-shadow: 0 8px 30px #ff3b3baa;
+      transform: translateY(-3px);
+    }
+    .btn.register {
+      background: #4ecdc4;
+      box-shadow: 0 6px 20px #4ecdc4aa;
+    }
+    .btn.register:hover {
+      background: #24b8ad;
+      box-shadow: 0 8px 30px #24b8adaa;
+      transform: translateY(-3px);
+    }
+    @media (max-width: 500px) {
+      #container {
+        padding: 25px 30px;
+        max-width: 90vw;
+      }
+      a.btn {
+        font-size: 1rem;
+        padding: 12px 28px;
+        margin: 10px 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="container" role="main" aria-label="Welcome and login or register">
+    <h1>Welcome to Secure Blog</h1>
+    <p class="subtitle">A secure and stylish blogging platform. Please login or register to continue.</p>
+    <a href="login.html" class="btn login" role="button">Login</a>
+    <a href="register.html" class="btn register" role="button">Register</a>
+  </div>
+</body>
+</html>

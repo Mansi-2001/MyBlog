@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="loginApp">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login - Secure Blog</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body ng-controller="LoginController as loginCtrl" ng-cloak>
+  <main id="app" class="form-container" role="main" aria-label="Login to Secure Blog">
+    <h1>Login</h1>
+    <form ng-submit="loginCtrl.login()">
+      <label for="username">Username</label>
+      <input id="username" type="text" ng-model="loginCtrl.loginData.username" required autocomplete="username" autofocus /><br><br>
+      <label for="password">Password</label>
+      <input id="password" type="password" ng-model="loginCtrl.loginData.password" required autocomplete="current-password" />
+      <div class="error" ng-if="loginCtrl.error" role="alert">{{loginCtrl.error}}</div><br><br>
+      <button type="submit">Login</button>
+    </form>
+    <p>Don't have an account? <a href="register.html">Register here</a>.</p>
+  </main>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.3/angular.min.js"></script>
+  <script>
+    angular.module('loginApp', [])
+    .controller('LoginController', ['$http', '$window', function($http, $window) {
+      const vm = this;
+      const apiUrl = 'http://localhost:3000/api';
+
+      vm.loginData = {};
+      vm.error = null;
+
+      vm.login = function() {
+        vm.error = null;
+        $http.post(apiUrl + '/login', vm.loginData)
+          .then(function(res) {
+            $window.localStorage.setItem('jwtToken', res.data.token);
+            $window.location.href = 'app.html';
+          })
+          .catch(function(err) {
+            vm.error = (err.data && err.data.message) || 'Login failed';
+          });
+      };
+    }]);
+  </script>
+</body>
+</html>

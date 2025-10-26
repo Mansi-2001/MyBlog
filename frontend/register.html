@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="registerApp">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Register - Secure Blog</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body ng-controller="RegisterController as registerCtrl" ng-cloak>
+  <main id="app" class="form-container" role="main" aria-label="Register to Secure Blog">
+    <h1>Register</h1>
+    <form ng-submit="registerCtrl.register()">
+      <label for="username">Username</label>
+      <input id="username" type="text" ng-model="registerCtrl.registerData.username" required autocomplete="username" minlength="3" autofocus /><br><br>
+      <label for="password">Password</label>
+      <input id="password" type="password" ng-model="registerCtrl.registerData.password" required autocomplete="new-password" minlength="6" />
+      <div class="error" ng-if="registerCtrl.error" role="alert">{{registerCtrl.error}}</div><br><br>
+      <button type="submit">Register</button>
+    </form>
+    <p>Already have an account? <a href="login.html">Login here</a>.</p>
+  </main>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.3/angular.min.js"></script>
+  <script>
+    angular.module('registerApp', [])
+    .controller('RegisterController', ['$http', '$window', function($http, $window) {
+      const vm = this;
+      const apiUrl = 'http://localhost:3000/api';
+
+      vm.registerData = {};
+      vm.error = null;
+
+      vm.register = function() {
+        vm.error = null;
+        $http.post(apiUrl + '/register', vm.registerData)
+          .then(function() {
+            $window.location.href = 'login.html';
+          })
+          .catch(function(err) {
+            if(err.data && err.data.errors) {
+              vm.error = err.data.errors.map(e => e.msg).join('; ');
+            } else {
+              vm.error = (err.data && err.data.message) || 'Registration failed';
+            }
+          });
+      };
+    }]);
+  </script>
+</body>
+</html>
